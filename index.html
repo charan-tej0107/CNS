@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cryptography Project</title>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            text-align: center;
+            background: #f0f2f5;
+            transition: 0.3s;
+        }
+
+        body.dark {
+            background: #121212;
+            color: white;
+        }
+
+        h1 { color: #1a237e; }
+        body.dark h1 { color: #90caf9; }
+
+        select {
+            padding: 10px;
+            margin: 15px;
+            width: 250px;
+        }
+
+        .card {
+            display: none;
+            background: white;
+            width: 380px;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        body.dark .card { background: #1e1e1e; }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        body.dark input {
+            background: #2c2c2c;
+            color: white;
+            border: 1px solid #555;
+        }
+
+        button {
+            background: #1565c0;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .output {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 6px;
+            font-weight: bold;
+            word-wrap: break-word;
+        }
+
+        body.dark .output {
+            background: #2a2a2a;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Cryptography Algorithms Project</h1>
+
+<button onclick="toggleDark()">🌙 Toggle Dark Mode</button>
+
+<br>
+
+<select onchange="showCipher(this.value)">
+    <option value="">-- Select Cipher --</option>
+    <option value="caesar">Caesar Cipher</option>
+    <option value="rail">Rail Fence Cipher</option>
+    <option value="rsa">RSA Algorithm</option>
+</select>
+
+<!-- CAESAR -->
+<div class="card" id="caesarCard">
+    <h2>Caesar Cipher</h2>
+    <input type="text" id="caesarText" placeholder="Enter Text">
+    <input type="number" id="caesarShift" placeholder="Shift">
+
+    <button onclick="caesarEncrypt()">Encrypt</button>
+    <button onclick="caesarDecrypt()">Decrypt</button>
+
+    <div class="output" id="caesarOutput"></div>
+</div>
+
+<!-- RAIL -->
+<div class="card" id="railCard">
+    <h2>Rail Fence Cipher</h2>
+    <input type="text" id="railText" placeholder="Enter Text">
+    <input type="number" id="railKey" placeholder="Rails">
+
+    <button onclick="railEncrypt()">Encrypt</button>
+    <button onclick="railDecrypt()">Decrypt</button>
+
+    <div class="output" id="railOutput"></div>
+</div>
+
+<!-- RSA -->
+<div class="card" id="rsaCard">
+    <h2>RSA Algorithm</h2>
+
+    <input type="text" id="p" placeholder="Prime p">
+    <input type="text" id="q" placeholder="Prime q">
+    <input type="text" id="e" placeholder="Public key e">
+    <input type="text" id="msg" placeholder="Message / Cipher (number only)">
+
+    <button onclick="rsaEncrypt()">Encrypt</button>
+    <button onclick="rsaDecrypt()">Decrypt</button>
+
+    <div class="output" id="rsaOutput"></div>
+</div>
+
+<script>
+
+function toggleDark() {
+    document.body.classList.toggle("dark");
+}
+
+function showCipher(type) {
+    document.getElementById("caesarCard").style.display = "none";
+    document.getElementById("railCard").style.display = "none";
+    document.getElementById("rsaCard").style.display = "none";
+
+    if (type === "caesar") document.getElementById("caesarCard").style.display = "block";
+    if (type === "rail") document.getElementById("railCard").style.display = "block";
+    if (type === "rsa") document.getElementById("rsaCard").style.display = "block";
+}
+
+//////////////// CAESAR //////////////////
+function caesarEncrypt() {
+    let text = document.getElementById("caesarText").value;
+    let shift = parseInt(document.getElementById("caesarShift").value);
+
+    let result = [...text].map(c => {
+        if (!c.match(/[a-z]/i)) return c;
+        let base = c === c.toUpperCase() ? 65 : 97;
+        return String.fromCharCode((c.charCodeAt(0) - base + shift) % 26 + base);
+    }).join("");
+
+    document.getElementById("caesarOutput").innerText = "Encrypted: " + result;
+}
+
+function caesarDecrypt() {
+    let shift = parseInt(document.getElementById("caesarShift").value);
+    document.getElementById("caesarShift").value = 26 - shift;
+    caesarEncrypt();
+}
+
+//////////////// RAIL //////////////////
+function railEncrypt() {
+    let text = document.getElementById("railText").value;
+    let key = parseInt(document.getElementById("railKey").value);
+
+    let rail = Array.from({ length: key }, () => []);
+    let dir = false, row = 0;
+
+    for (let char of text) {
+        rail[row].push(char);
+        if (row == 0 || row == key - 1) dir = !dir;
+        row += dir ? 1 : -1;
+    }
+
+    document.getElementById("railOutput").innerText =
+        "Encrypted: " + rail.flat().join("");
+}
+
+function railDecrypt() {
+    let text = document.getElementById("railText").value;
+    let key = parseInt(document.getElementById("railKey").value);
+
+    let rail = Array.from({ length: key }, () => Array(text.length).fill('\n'));
+
+    let dir;
+    let row = 0, col = 0;
+
+    for (let i = 0; i < text.length; i++) {
+        if (row == 0) dir = true;
+        if (row == key - 1) dir = false;
+
+        rail[row][col++] = '*';
+        row += dir ? 1 : -1;
+    }
+
+    let index = 0;
+    for (let i = 0; i < key; i++) {
+        for (let j = 0; j < text.length; j++) {
+            if (rail[i][j] == '*' && index < text.length)
+                rail[i][j] = text[index++];
+        }
+    }
+
+    let result = '';
+    row = 0; col = 0;
+
+    for (let i = 0; i < text.length; i++) {
+        if (row == 0) dir = true;
+        if (row == key - 1) dir = false;
+
+        if (rail[row][col] != '*')
+            result += rail[row][col++];
+
+        row += dir ? 1 : -1;
+    }
+
+    document.getElementById("railOutput").innerText =
+        "Decrypted: " + result;
+}
+
+//////////////// RSA //////////////////
+
+// PRIME CHECK
+function isPrime(n) {
+    if (n < 2n) return false;
+    if (n === 2n) return true;
+    if (n % 2n === 0n) return false;
+
+    for (let i = 3n; i * i <= n; i += 2n) {
+        if (n % i === 0n) return false;
+    }
+    return true;
+}
+
+// gcd
+function gcd(a, b) {
+    while (b != 0n) {
+        let t = b;
+        b = a % b;
+        a = t;
+    }
+    return a;
+}
+
+// mod inverse
+function modInverse(e, phi) {
+    let [a, m] = [e, phi];
+    let [m0, x0, x1] = [m, 0n, 1n];
+
+    while (a > 1n) {
+        let q = a / m;
+        [a, m] = [m, a % m];
+        [x0, x1] = [x1 - q * x0, x0];
+    }
+
+    if (x1 < 0n) x1 += m0;
+    return x1;
+}
+
+// power mod
+function modPow(base, exp, mod) {
+    let result = 1n;
+    base = base % mod;
+
+    while (exp > 0n) {
+        if (exp % 2n === 1n)
+            result = (result * base) % mod;
+
+        exp = exp / 2n;
+        base = (base * base) % mod;
+    }
+
+    return result;
+}
+
+function rsaEncrypt() {
+    try {
+        let p = BigInt(document.getElementById("p").value);
+        let q = BigInt(document.getElementById("q").value);
+        let e = BigInt(document.getElementById("e").value);
+        let m = BigInt(document.getElementById("msg").value);
+
+        // PRIME VALIDATION
+        if (!isPrime(p) || !isPrime(q)) {
+            document.getElementById("rsaOutput").innerText =
+                "❌ p and q must be PRIME numbers";
+            return;
+        }
+
+        let n = p * q;
+        let phi = (p - 1n) * (q - 1n);
+
+        if (gcd(e, phi) !== 1n) {
+            document.getElementById("rsaOutput").innerText =
+                "❌ e must be coprime with φ(n)";
+            return;
+        }
+
+        if (m >= n) {
+            document.getElementById("rsaOutput").innerText =
+                "❌ Message must be less than n";
+            return;
+        }
+
+        let c = modPow(m, e, n);
+
+        document.getElementById("rsaOutput").innerText =
+            "Encrypted: " + c.toString();
+
+    } catch {
+        document.getElementById("rsaOutput").innerText =
+            "❌ Enter valid NUMBERS only";
+    }
+}
+
+function rsaDecrypt() {
+    try {
+        let p = BigInt(document.getElementById("p").value);
+        let q = BigInt(document.getElementById("q").value);
+        let e = BigInt(document.getElementById("e").value);
+        let c = BigInt(document.getElementById("msg").value);
+
+        // PRIME VALIDATION
+        if (!isPrime(p) || !isPrime(q)) {
+            document.getElementById("rsaOutput").innerText =
+                "❌ p and q must be PRIME numbers";
+            return;
+        }
+
+        let n = p * q;
+        let phi = (p - 1n) * (q - 1n);
+        let d = modInverse(e, phi);
+
+        let m = modPow(c, d, n);
+
+        document.getElementById("rsaOutput").innerText =
+            "Decrypted: " + m.toString();
+
+    } catch {
+        document.getElementById("rsaOutput").innerText =
+            "❌ Enter valid NUMBERS only";
+    }
+}
+
+</script>
+
+</body>
+</html>
